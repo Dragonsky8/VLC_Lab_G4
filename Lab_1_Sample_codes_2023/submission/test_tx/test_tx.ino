@@ -68,13 +68,34 @@ void loop() {
 
   String dataToEncode = "Hello VLC&S 2023-2024";
 
+  char preamble_arr[24];
+  char length_arr[16];
+  char crc_arr[16]; 
+
+  //preamble part here
+  int preamble_hex = 0xAAAAAA;
+  String preamble_binary = hexToBinaryString(preamble_hex);
+  for (int i = 0; i < preamble_binary.length(); i++){
+    char bit = preamble_binary.charAt(i);
+    preamble_arr[i] = bit;
+  }
+  if (preamble_binary.length() < 24){
+    for (int i = preamble_binary.length(); i < 24; i++){
+      preamble_arr[i] = '0';
+    }
+  }
+
+  Serial.println("The preamble is:" + preamble_binary);
+  for (int i = 0; i < sizeof(preamble_arr)/sizeof(preamble_arr[0]); i++){
+    Serial.print(preamble_arr[i]);
+  }
+  //convert the data to binary sequence
   String binaryData = stringToBinary(dataToEncode);
   Serial.println(binaryData);
   Serial.println(binaryData.length());
 
-  int preamble_hex = 0xAAAAAA;
-  String preamble_binary = hexToBinaryString(preamble_hex);
 
+  //payload part here
   String payload = "";
   // Manchester coding
   for (int i = 0; i < binaryData.length(); i++) {
@@ -88,13 +109,33 @@ void loop() {
     }
   }
 
+    //length part here
+  String binary_length = intToBinary(payload.length());
+  for (int i = 0; i < binary_length.length(); i++){
+    char bit = binary_length.charAt(i);
+    length_arr[i] = bit;
+  }
+
+  Serial.println("The length is:" + binary_length);
+  for (int i = 0; i < sizeof(length_arr)/sizeof(length_arr[0]); i++){
+    Serial.print(length_arr[i]);
+  }
+
+
   int payload_length = payload.length();
+  char payload_arr[payload_length];
+
   Serial.println(payload);
   Serial.println(payload_length);
+  for (int i = 0; i < payload.length(); i++){
+    char bit = payload.charAt(i);
+    payload_arr[i] = bit;
+  }
+
 
   //send the frame based on red channel
   for (int i = 0; i < payload.length(); i++){
-    char bit = binaryData.charAt(i);
+    char bit = payload.charAt(i);
     //send 0 or 1
     if (bit == '0') {
       digitalWrite(ledR, 255); // on-off
@@ -125,6 +166,17 @@ String hexToBinaryString(int hexValue) {
     int remainder = hexValue % 2;
     binaryString = String(remainder) + binaryString;
     hexValue /= 2;
+  }
+
+  return binaryString;
+}
+
+String intToBinary(int decimalValue) {
+  String binaryString = "";
+
+  for (int i = 15; i >= 0; i--) {
+    int bit = (decimalValue >> i) & 1;
+    binaryString += String(bit);
   }
 
   return binaryString;
