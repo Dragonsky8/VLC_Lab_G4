@@ -1,13 +1,10 @@
+#include <Arduino_CRC32.h>
+
 /*
   test_tx.ino: testing the VLC transmitter
   Course: CESE4110 Visible Light Communication & Sensing
 */
-
-
-// 设置曼彻斯特编码的时间间隔（微秒）
-#define MANCHESTER_INTERVAL 500
-
-
+#include <Arduino_CRC32.h>
 
 /*
  * The VLC transmitter is equipped with an RGB LED. 
@@ -71,6 +68,7 @@ void loop() {
   char preamble_arr[24];
   char length_arr[16];
   char crc_arr[16]; 
+ 
 
   //preamble part here
   int preamble_hex = 0xAAAAAA;
@@ -131,13 +129,29 @@ void loop() {
     char bit = payload.charAt(i);
     payload_arr[i] = bit;
   }
+  char merged[40+payload_length]; //preamble+length+payload
+  memcpy(merged, preamble_arr, sizeof(preamble_arr));
+  memcpy(merged+24, length_arr, sizeof(length_arr));
+  memcpy(merged+40, payload_arr, sizeof(payload_arr));
+  uint32_t crcValue = calculateCRC32(merged, sizeof(merged));
 
+  String crc_str = uint32ToBinaryString(crcValue);
+  char crc_arr[16];
+  for (int i = 0; i < crc_str.length(); i++){
+    char bit = crc_str.charAt(i);
+    crc_str_arr[i] = bit;
+  }
+  if (crc_str.length() < 16){
+    for (int i = crc_str.length(); i < 16; i++){
+      crc_str_arr[i] = '0';
+    }
+  }
 
   //send the frame based on red channel
   for (int i = 0; i < payload.length(); i++){
     char bit = payload.charAt(i);
     //send 0 or 1
-    if (bit == '0') {
+    if (bit == '1') {
       digitalWrite(ledR, 255); // on-off
       
     } else {
@@ -176,6 +190,17 @@ String intToBinary(int decimalValue) {
 
   for (int i = 15; i >= 0; i--) {
     int bit = (decimalValue >> i) & 1;
+    binaryString += String(bit);
+  }
+
+  return binaryString;
+}
+
+String uint32ToBinaryString(uint32_t value) {
+  String binaryString = "";
+  
+  for (int i = 31; i >= 0; i--) {
+    int bit = (value >> i) & 1;
     binaryString += String(bit);
   }
 
