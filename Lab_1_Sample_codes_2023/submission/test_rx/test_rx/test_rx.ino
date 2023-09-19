@@ -77,7 +77,13 @@ void loop() {
         payloadBuffer[i] = signalVal;
         delay(loopDelay);
       }
+
+      // int payload_decoded[sizePayload/2];
+      int* payload_decoded = manchester_decode(payloadBuffer); //Manchester decoding
+      String information = binaryToString(payload_decoded, sizePayload/2); //convert the array to string
+      Serial.println("The information in this frame is: "+information);
       Serial.println("Done with payload");
+      delete payload_decoded;
       // Add crc of the payload part
       crc.add(payloadBuffer, sizePayload);
 
@@ -182,4 +188,36 @@ int binToInt(int array[], int len) {
 
 
   return output;
+}
+
+//convert the binary sequence to words
+String binaryToString(int* binaryData, int length) {
+ 
+  String originalString = "";
+  for (int i = 0; i < length; i += 8) {
+    int byteValue = 0;
+    for (int j = 0; j < 8; j++) {
+      byteValue |= (binaryData[i + j] << (7 - j));
+    }
+    originalString += char(byteValue);
+  }
+  return originalString;
+}
+
+//Calculate the decoded binary sequence
+int* manchester_decode(uint8_t payload[]){
+  int len = sizeof(payload)/sizeof(payload[0]);
+  int* payload_decoded = new int[len/2];
+  int i = 0, j = 0;
+  while(i < len - 1){
+    if (payload[i] == 0b0 && payload[i+1] == 0b1){
+      payload_decoded[j] = 1;
+    }
+    if (payload[i] == 0b1 && payload[i+1] == 0b0){
+      payload_decoded[j] = 0;
+    }
+    i += 2;
+    j++;
+  }
+  return payload_decoded;
 }
