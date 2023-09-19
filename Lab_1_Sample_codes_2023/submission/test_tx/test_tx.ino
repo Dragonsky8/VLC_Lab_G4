@@ -64,7 +64,7 @@ void loop() {
   
   // delay(500); // TX frequency:  1s/400ms = 2.5 Hz
 
-  String dataToEncode = "Hello VLC&S 2023-2024";
+  String dataToEncode = "Hello";
 
   char preamble_arr[24];
   char length_arr[16];
@@ -105,7 +105,7 @@ void loop() {
     }
   }
 
-    //length part here
+  //length part here
   String binary_length = intToBinary(payload.length());
   for (int i = 0; i < binary_length.length(); i++){
     char bit = binary_length.charAt(i);
@@ -166,14 +166,14 @@ void loop() {
   //send the frame based on red channel
   for (int i = 0; i < sizeof(frame)/sizeof(frame[0]); i++){
     //send 0 or 1
-    if (frame[i] == '1') {
+    if (frame[i] == '0') {
       digitalWrite(ledR, 255); // on-off
       
     } else {
       digitalWrite(ledR, 0); // off-on
     
     }
-    delay(1000);
+    delay(50);
   }
   Serial.println("done with payload");
   // delay for a while
