@@ -1,10 +1,11 @@
-#include <Arduino_CRC32.h>
+
+#include <CRC16.h>
 
 /*
-  test_tx.ino: testing the VLC transmitter
-  Course: CESE4110 Visible Light Communication & Sensing
+    test_tx.ino: testing the VLC transmitter
+    Course: CESE4110 Visible Light Communication & Sensing
 */
-#include <Arduino_CRC32.h>
+
 
 /*
  * The VLC transmitter is equipped with an RGB LED. 
@@ -84,12 +85,9 @@ void loop() {
   }
 
   Serial.println("The preamble is:" + preamble_binary);
-  for (int i = 0; i < sizeof(preamble_arr)/sizeof(preamble_arr[0]); i++){
-    Serial.print(preamble_arr[i]);
-  }
   //convert the data to binary sequence
   String binaryData = stringToBinary(dataToEncode);
-  Serial.println(binaryData);
+  Serial.println("The original BINARY sequence is: " + binaryData);
   Serial.println(binaryData.length());
 
 
@@ -114,51 +112,68 @@ void loop() {
     length_arr[i] = bit;
   }
 
-  Serial.println("The length is:" + binary_length);
-  for (int i = 0; i < sizeof(length_arr)/sizeof(length_arr[0]); i++){
-    Serial.print(length_arr[i]);
-  }
-
-
   int payload_length = payload.length();
   char payload_arr[payload_length];
 
-  Serial.println(payload);
+  Serial.println("The payload length(binary) is:" + binary_length);
+  Serial.println("The payload is:"+payload);
   Serial.println(payload_length);
+
+  //convert the payload from stirng to array
   for (int i = 0; i < payload.length(); i++){
     char bit = payload.charAt(i);
     payload_arr[i] = bit;
   }
-  char merged[40+payload_length]; //preamble+length+payload
-  memcpy(merged, preamble_arr, sizeof(preamble_arr));
-  memcpy(merged+24, length_arr, sizeof(length_arr));
-  memcpy(merged+40, payload_arr, sizeof(payload_arr));
-  uint32_t crcValue = calculateCRC32(merged, sizeof(merged));
+  char merged[40+payload_length]; //preamble+length+payload, used for calculating crc
+  memcpy(merged, preamble_arr, sizeof(preamble_arr)/sizeof(preamble_arr[0]));
+  memcpy(merged+24, length_arr, sizeof(length_arr)/sizeof(length_arr[0]));
+  memcpy(merged+40, payload_arr, sizeof(payload_arr)/sizeof(payload_arr[0]));
+   for (int i = 0; i < sizeof(merged)/sizeof(merged[0]); i++){
+    if (i != sizeof(merged)/sizeof(merged[0]) - 1){
+      Serial.print(merged[i]);
+    }else{
+      Serial.println(merged[i]);
+    }
+    
+  }
 
-  String crc_str = uint32ToBinaryString(crcValue);
-  char crc_arr[16];
+  //below are the program for CRC calculating
+  CRC16 crc;
+  crc.add((uint8_t *) merged, 40+payload_length);
+  uint16_t crcValue = crc.calc();
+
+  String crc_str = uint16ToBinary(crcValue);
+  Serial.println(crc_str);
   for (int i = 0; i < crc_str.length(); i++){
     char bit = crc_str.charAt(i);
-    crc_str_arr[i] = bit;
+    crc_arr[i] = bit;
   }
-  if (crc_str.length() < 16){
-    for (int i = crc_str.length(); i < 16; i++){
-      crc_str_arr[i] = '0';
-    }
+
+
+  //merge all parts together to one frame (also char[])
+  char frame[56+payload_length];
+  for (int i = 0; i < 40+payload_length; i++){
+    frame[i] = merged[i];
+  }
+  for (int i = 40+payload_length; i < 56+payload_length; i++){
+    frame[i] = crc_arr[i - (40+payload_length)];
+  }
+
+   for (int i = 0; i < sizeof(frame)/sizeof(frame[0]); i++){
+    Serial.print(frame[i]);
   }
 
   //send the frame based on red channel
-  for (int i = 0; i < payload.length(); i++){
-    char bit = payload.charAt(i);
+  for (int i = 0; i < sizeof(frame)/sizeof(frame[0]); i++){
     //send 0 or 1
-    if (bit == '1') {
+    if (frame[i] == '1') {
       digitalWrite(ledR, 255); // on-off
       
     } else {
       digitalWrite(ledR, 0); // off-on
     
     }
-    delay(500);
+    delay(1000);
   }
   Serial.println("done with payload");
   // delay for a while
@@ -196,10 +211,10 @@ String intToBinary(int decimalValue) {
   return binaryString;
 }
 
-String uint32ToBinaryString(uint32_t value) {
+String uint16ToBinary(uint16_t value) {
   String binaryString = "";
-  
-  for (int i = 31; i >= 0; i--) {
+
+  for (int i = 15; i >= 0; i--) {
     int bit = (value >> i) & 1;
     binaryString += String(bit);
   }
