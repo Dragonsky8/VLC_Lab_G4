@@ -64,7 +64,7 @@ void loop() {
   
   // delay(500); // TX frequency:  1s/400ms = 2.5 Hz
 
-  String dataToEncode = "Hello VLC&S_2023";
+  String dataToEncode = "Hello";
 
   char preamble_arr[24];
   char length_arr[16];
@@ -125,9 +125,9 @@ void loop() {
     payload_arr[i] = bit;
   }
   char merged[40+payload_length]; //preamble+length+payload, used for calculating crc
-  memcpy(merged, preamble_arr, sizeof(preamble_arr));
-  memcpy(merged+24, length_arr, sizeof(length_arr));
-  memcpy(merged+40, payload_arr, sizeof(payload_arr));
+  memcpy(merged, preamble_arr, sizeof(preamble_arr) / sizeof(preamble_arr[0]));
+  memcpy(merged+24, length_arr, sizeof(length_arr) / sizeof(length_arr[0]));
+  memcpy(merged+40, payload_arr, sizeof(payload_arr)/sizeof(payload_arr[0]));
    for (int i = 0; i < sizeof(merged)/sizeof(merged[0]); i++){
     if (i != sizeof(merged)/sizeof(merged[0]) - 1){
       Serial.print(merged[i]);
@@ -139,11 +139,15 @@ void loop() {
 
   //below are the program for CRC calculating
   CRC16 crc;
-  crc.add((uint8_t *) merged, 40+payload_length);
+  crc.add((uint8_t *) preamble_arr, 24);
+  crc.add((uint8_t *) length_arr, 16);
+  crc.add((uint8_t *) payload_arr, payload_length);
+  // crc.add((uint8_t *) merged, 40+payload_length);
   uint16_t crcValue = crc.calc();
 
   String crc_str = uint16ToBinary(crcValue);
   Serial.println(crc_str);
+  Serial.println((crcValue));
   for (int i = 0; i < crc_str.length(); i++){
     char bit = crc_str.charAt(i);
     crc_arr[i] = bit;
@@ -173,7 +177,7 @@ void loop() {
       digitalWrite(ledR, 0); // off-on
     
     }
-    delay(50);
+    delay(100);
   }
   Serial.println("done with payload");
   // delay for a while
