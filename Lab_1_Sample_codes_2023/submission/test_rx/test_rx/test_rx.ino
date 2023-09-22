@@ -3,7 +3,7 @@
   Course: CESE4110 Visible Light Communication & Sensing
 */
 #include <RingBuf.h>
-#include "CRC16.h"
+#include <CRC16.h>
 
 
 
@@ -14,8 +14,8 @@
  * Pin 8 of the OPT101 is connected to GND of the Arduino Due
  */
 #define PD A0          // PD: Photodiode
-#define loopDelay 50   // In miliseconds
-#define threshold 500  // Define by light intensity
+#define loopDelay 100   // In miliseconds
+#define threshold 900  // Define by light intensity
 // Buffer used to check when the Preemple part of the frame is received
 RingBuf<int, 24> preembleBuffer;
 RingBuf<int, 24> preembleMessage;
@@ -29,6 +29,8 @@ CRC16 crc;
  */
 void setup() {
   Serial.begin(115200);
+  // Store the preemble message in the RingBuffer, via this function
+  hexToBinary(0xAAAAAA);
 }
 
 
@@ -36,8 +38,6 @@ void setup() {
  * The Main function
  */
 void loop() {
-  // Store the preemble message in the RingBuffer, via this function
-  hexToBinary(0xAAAAAA);
   while (1) {
     // Check if preemble is complete
     int signalVal = calculateThreshold(analogRead(PD));
@@ -50,8 +50,6 @@ void loop() {
     // delay(1000000);
     // If the buffer is full, check if the buffer equals the preemple message
     if (compareRingBuf(preembleBuffer, preembleMessage)) {
-      // Add preemble to CRC object
-      addRingBufCRC(preembleBuffer);
       Serial.println("match found");
 
       // Determine the payload length
@@ -61,33 +59,22 @@ void loop() {
 
       for (int i = 0; i < 16; i++) {
         lengthArray[i] = calculateThreshold(analogRead(PD));
-        Serial.println(lengthArray[i]);
+        Serial.print(lengthArray[i]);
         delay(loopDelay);
       }
-      crc.add((uint8_t *)lengthArray, sizeof(lengthArray) / sizeof(lengthArray[0]));
       // Calculate payload size
       int sizePayload = binToInt(lengthArray, 16);
       Serial.println((sizePayload));
       // Start reading the payload
-      uint8_t payloadBuffer[sizePayload];
+      int payloadBuffer[sizePayload];
       for (int i = 0; i < sizePayload; i++) {
         int signalVal = calculateThreshold(analogRead(PD));
 
         // TODO: Should keep track of the push computation time, and adjust loopDelay accordingly to keep consistent looptime.
         payloadBuffer[i] = signalVal;
+        Serial.print(payloadBuffer[i]);
         delay(loopDelay);
       }
-
-      // int payload_decoded[sizePayload/2];
-      int* payload_decoded = manchester_decode(payloadBuffer); //Manchester decoding
-      String information = binaryToString(payload_decoded, sizePayload/2); //convert the array to string
-      Serial.println("The information in this frame is: "+information);
-      Serial.println("Done with payload");
-      delete payload_decoded;
-      // Add crc of the payload part
-      crc.add(payloadBuffer, sizePayload);
-
-
       // Determine the crc value
       int crcArray[16];
       for (int i = 0; i < 16; i++) {
@@ -95,10 +82,28 @@ void loop() {
         delay(loopDelay);
       }
       int crcReceived = binToInt(crcArray, 16);
+      // Add crc of the payload part
+      // Add preemble to CRC object
+      addRingBufCRC(preembleBuffer);
+      crc.add((uint8_t *)lengthArray, 16);
+      crc.add((uint8_t *)payloadBuffer, sizePayload);
+
       uint16_t crcCalc = crc.calc();
+      // Check comparison
       if (crcReceived != crcCalc) {
         Serial.println("Invalid CRC");
+        Serial.println((crcReceived));
+        Serial.println((crcCalc));
+        delay(25000);
       }
+
+      // int payload_decoded[sizePayload/2];
+      // int* payload_decoded = manchester_decode(payloadBuffer);                //Manchester decoding
+      // String information = binaryToString(payload_decoded, sizePayload / 2);  //convert the array to string
+      // Serial.println("The information in this frame is: " + information);
+      // Serial.println("Done with payload");
+      // delete payload_decoded;
+      
       for (int i = 0; i < 16; i++) {
         Serial.println(payloadBuffer[i]);
       }
@@ -146,9 +151,15 @@ bool compareRingBuf(RingBuf<int, 24> A, RingBuf<int, 24> B) {
 }
 
 void addRingBufCRC(RingBuf<int, 24> A) {
-  for (int i = A.size() - 1; i >= 0; i--) {
-    crc.add(A[i]);
+int temp[24];
+  for (int i = 23; i >= 0; i--) {
+    temp[23-i] = A[i];
   }
+  Serial.println("preamble");
+  for(int i=0; i< 24; i++){
+    Serial.print(temp[i]);
+  }
+  crc.add((uint8_t *)temp, 24);
 }
 
 // function definition
@@ -192,7 +203,7 @@ int binToInt(int array[], int len) {
 
 //convert the binary sequence to words
 String binaryToString(int* binaryData, int length) {
- 
+
   String originalString = "";
   for (int i = 0; i < length; i += 8) {
     int byteValue = 0;
@@ -205,15 +216,15 @@ String binaryToString(int* binaryData, int length) {
 }
 
 //Calculate the decoded binary sequence
-int* manchester_decode(uint8_t payload[]){
-  int len = sizeof(payload)/sizeof(payload[0]);
-  int* payload_decoded = new int[len/2];
+int* manchester_decode(uint8_t payload[]) {
+  int len = sizeof(payload) / sizeof(payload[0]);
+  int* payload_decoded = new int[len / 2];
   int i = 0, j = 0;
-  while(i < len - 1){
-    if (payload[i] == 0b0 && payload[i+1] == 0b1){
+  while (i < len - 1) {
+    if (payload[i] == 0b0 && payload[i + 1] == 0b1) {
       payload_decoded[j] = 1;
     }
-    if (payload[i] == 0b1 && payload[i+1] == 0b0){
+    if (payload[i] == 0b1 && payload[i + 1] == 0b0) {
       payload_decoded[j] = 0;
     }
     i += 2;
