@@ -64,7 +64,7 @@ void loop() {
   
   // delay(500); // TX frequency:  1s/400ms = 2.5 Hz
 
-  String dataToEncode = "Hello";
+  String dataToEncode = "Hello VLC&S_2023";
 
   char preamble_arr[24];
   char length_arr[16];
@@ -125,9 +125,9 @@ void loop() {
     payload_arr[i] = bit;
   }
   char merged[40+payload_length]; //preamble+length+payload, used for calculating crc
-  memcpy(merged, preamble_arr, sizeof(preamble_arr)/sizeof(preamble_arr[0]));
-  memcpy(merged+24, length_arr, sizeof(length_arr)/sizeof(length_arr[0]));
-  memcpy(merged+40, payload_arr, sizeof(payload_arr)/sizeof(payload_arr[0]));
+  memcpy(merged, preamble_arr, sizeof(preamble_arr));
+  memcpy(merged+24, length_arr, sizeof(length_arr));
+  memcpy(merged+40, payload_arr, sizeof(payload_arr));
    for (int i = 0; i < sizeof(merged)/sizeof(merged[0]); i++){
     if (i != sizeof(merged)/sizeof(merged[0]) - 1){
       Serial.print(merged[i]);
