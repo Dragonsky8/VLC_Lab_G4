@@ -131,13 +131,13 @@ void loop() {
   memcpy(merged, preamble_arr, sizeof(preamble_arr) / sizeof(preamble_arr[0]));
   memcpy(merged + 24, length_arr, sizeof(length_arr) / sizeof(length_arr[0]));
   memcpy(merged + 40, payload_arr, sizeof(payload_arr) / sizeof(payload_arr[0]));
-  for (int i = 0; i < sizeof(merged) / sizeof(merged[0]); i++) {
-    if (i != sizeof(merged) / sizeof(merged[0]) - 1) {
-      // Serial.print(merged[i]);
-    } else {
-      // Serial.println(merged[i]);
-    }
-  }
+  // for (int i = 0; i < sizeof(merged) / sizeof(merged[0]); i++) {
+  //   if (i != sizeof(merged) / sizeof(merged[0]) - 1) {
+  //     // Serial.print(merged[i]);
+  //   } else {
+  //     // Serial.println(merged[i]);
+  //   }
+  // }
 
   //below are the program for CRC calculating
   CRC16 crc;
@@ -146,23 +146,23 @@ void loop() {
   uint8_t pay_arr[payload_length];
   for (int i = 0; i < 24; i++){
     if (preamble_arr[i] == '1'){
-      pre_arr[i] = 1;
+      pre_arr[i] = 0b1;
     }else{
-      pre_arr[i] = 0;
+      pre_arr[i] = 0b0;
     }
   }
   for (int i = 0; i < 16; i++){
     if (length_arr[i] == '1'){
-      len_arr[i] = 1;
+      len_arr[i] = 0b1;
     }else{
-      len_arr[i] = 0;
+      len_arr[i] = 0b0;
     }
   }
   for (int i = 0; i < payload_length; i++){
     if (payload_arr[i] == '1'){
-      pay_arr[i] = 1;
+      pay_arr[i] = 0b1;
     }else{
-      pay_arr[i] = 0;
+      pay_arr[i] = 0b0;
     }
   }
 
@@ -171,6 +171,8 @@ void loop() {
   crc.add((uint8_t *)pay_arr, payload_length);
   // crc.add((uint8_t *) merged, 40+payload_length);
   uint16_t crcValue = crc.calc();
+  Serial.println("CRC: ");
+  Serial.print((crcValue));
 
   String crc_str = uint16ToBinary(crcValue);
   // Serial.println(crc_str);
@@ -190,9 +192,9 @@ void loop() {
     frame[i] = crc_arr[i - (40 + payload_length)];
   }
 
-  for (int i = 0; i < sizeof(frame) / sizeof(frame[0]); i++) {
-    // Serial.print(frame[i]);
-  }
+  // for (int i = 0; i < sizeof(frame) / sizeof(frame[0]); i++) {
+  //   Serial.print(frame[i]);
+  // }
 
   //send the frame based on red channel
   for (int i = 0; i < sizeof(frame) / sizeof(frame[0]); i++) {
@@ -207,14 +209,14 @@ void loop() {
     end = micros();
     uint32_t elapsedTime = end - start;  // 计算经过的时间
       // 在串口监视器中打印经过的时间
-    uint32_t remainder = (200) - elapsedTime;
-    Serial.println(remainder);
+    uint32_t remainder = (100000) - elapsedTime;
+    // Serial.println(remainder);
 
     delayMicroseconds(remainder);
   }
-  // Serial.println("done with payload");
+  Serial.println("done with sending payload");
   // delay for a while
-  // delay(1000000000000000000);
+  delay(1000);
 }
 
 String stringToBinary(String input) {

@@ -14,8 +14,8 @@
  * Pin 8 of the OPT101 is connected to GND of the Arduino Due
  */
 #define PD A1           // PD: Photodiode NOTE(broken wire )
-#define loopDelay 200  // In mircroSeconds
-#define threshold 230   // Define by light intensity
+#define loopDelay 100000  // In mircroSeconds
+#define threshold 800   // Define by light intensity
 // Buffer used to check when the Preemple part of the frame is received
 RingBuf<uint8_t, 24> preembleBuffer;
 RingBuf<uint8_t, 24> preembleMessage;
@@ -43,9 +43,10 @@ void loop() {
   while (1) {
     // Check if preemble is complete
     bigStart = micros();
-    int signalVal = calculateThreshold(analogRead(PD));
+    uint8_t signalVal = calculateThreshold(analogRead(PD));
     bool result = preembleBuffer.pushOverwrite(signalVal);
 
+    // Calibration part
     // Serial.println(signalVal);
     // Serial.println(analogRead(PD));
 
@@ -59,8 +60,9 @@ void loop() {
       Serial.println("match found");
       // Wait for time to get next interval
       stop = micros();
-      delayMicroseconds(loopDelay - (stop - start));
+      delayMicroseconds(loopDelay - (stop - bigStart));
       delayMicroseconds(loopDelay);
+
       // Determine the payload length
       uint8_t lengthArray[16];
       for (int i = 0; i < 16; i++) {
@@ -70,9 +72,11 @@ void loop() {
         stop = micros();
         delayMicroseconds(loopDelay - (stop - start));
       }
+      Serial.println("");
       // Calculate payload size
       int sizePayload = binToInt(lengthArray, 16);
-      Serial.println((sizePayload));
+      Serial.println("size payload in int: ");
+      Serial.print((sizePayload));
       // Start reading the payload
       uint8_t payloadBuffer[sizePayload];
       for (int i = 0; i < sizePayload; i++) {
@@ -82,7 +86,7 @@ void loop() {
 
         // TODO: Should keep track of the push computation time, and adjust loopDelay accordingly to keep consistent looptime.
         payloadBuffer[i] = signalVal;
-        
+
         stop = micros();
         delayMicroseconds(loopDelay - (stop - start));
       }
@@ -98,13 +102,36 @@ void loop() {
       // Add crc of the payload part
       // Add preemble to CRC object
       addRingBufCRC(preembleBuffer);
+      // Print len array
+      Serial.println("");
+      Serial.println("Length array");
+      for (int i = 0; i < 16; i++) {
+        Serial.print((lengthArray[i]));
+      }
+      Serial.println("");
       crc.add((uint8_t*)lengthArray, 16);
       crc.add((uint8_t*)payloadBuffer, sizePayload);
-      Serial.println("show payload");
-      for (int i=0; i< sizePayload; i++) {
+      Serial.println("");
+      Serial.println("Payload array");
+      for (int i = 0; i < sizePayload; i++) {
         Serial.print((payloadBuffer[i]));
       }
+      Serial.println("");
       uint16_t crcCalc = crc.calc();
+
+      Serial.println("CRC receiver calc:");
+      Serial.print((crcCalc));
+
+      // Serial.println("Show frame: ");
+      // uint8_t merged[16 + sizePayload];  //preamble+length+payload, used for calculating crc
+      // // memcpy(merged, preembleBuffer, sizeof(preembleBuffer) / sizeof(preembleBuffer[0]));
+      // memcpy(merged, lengthArray, sizeof(lengthArray) / sizeof(lengthArray[0]));
+      // memcpy(merged + 16, payloadBuffer, sizeof(payloadBuffer) / sizeof(payloadBuffer[0]));
+      // for (int i = 0; i < sizeof(merged) / sizeof(merged[0]); i++) {
+      //   Serial.print(merged[i]);
+      // }
+      Serial.println("done");
+
       // Check comparison
       if (crcReceived != crcCalc) {
         Serial.println(" Invalid CRC");
@@ -113,13 +140,14 @@ void loop() {
         delay(5000);
       }
 
-   
-      int* payload_decoded = manchester_decode(payloadBuffer);                //Manchester decoding
+
+      int* payload_decoded = manchester_decode(payloadBuffer);                         //Manchester decoding
       String binaryString = intArrayToBinaryString(payload_decoded, sizePayload / 2);  //convert the array to string
       String information = binaryStringToString(binaryString);
       Serial.println("The information in this frame is: " + information);
       Serial.println("Done with payload");
       delete payload_decoded;
+      preembleBuffer.clear();
       crc.reset();
     } else {
       stop = micros();
@@ -164,24 +192,40 @@ int manchesterDecode(int A, int B) {
 }
 
 bool compareRingBuf(RingBuf<uint8_t, 24> A, RingBuf<uint8_t, 24> B) {
-  for (int i = A.size() - 1; i >= 0; i--) {
+  // Printing the Ringbuf Comparison
+  // for (int i = (A.size() - 1); i >= 0; i--) {
+  //   Serial.print((A[i]));
+  // }
+  // Serial.print(" VS ");
+  // for (int i = (B.size() - 1); i >= 0; i--) {
+  //   Serial.print((B[i]));
+  // }
+  // Serial.println("");
+
+  if (A.size() != B.size()) {
+    return false;
+  }
+  for (int i = (A.size() - 1); i >= 0; i--) {
     if (A[i] != B[i]) {
       return false;
     }
     // Serial.print(A[i]);
   }
+
   return true;
 }
 
 void addRingBufCRC(RingBuf<uint8_t, 24> A) {
-  int temp[24];
+  uint8_t temp[24];
   for (int i = 23; i >= 0; i--) {
     temp[23 - i] = A[i];
   }
-  Serial.println("preamble");
+  Serial.println("");
+  Serial.println("preemble");
   for (int i = 0; i < 24; i++) {
     Serial.print((temp[i]));
   }
+  Serial.println("");
   crc.add((uint8_t*)temp, 24);
 }
 
