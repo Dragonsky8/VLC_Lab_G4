@@ -141,9 +141,34 @@ void loop() {
 
   //below are the program for CRC calculating
   CRC16 crc;
-  crc.add((uint8_t *)preamble_arr, 24);
-  crc.add((uint8_t *)length_arr, 16);
-  crc.add((uint8_t *)payload_arr, payload_length);
+  uint8_t pre_arr[24];
+  uint8_t len_arr[16];
+  uint8_t pay_arr[payload_length];
+  for (int i = 0; i < 24; i++){
+    if (preamble_arr[i] == '1'){
+      pre_arr[i] = 1;
+    }else{
+      pre_arr[i] = 0;
+    }
+  }
+  for (int i = 0; i < 16; i++){
+    if (length_arr[i] == '1'){
+      len_arr[i] = 1;
+    }else{
+      len_arr[i] = 0;
+    }
+  }
+  for (int i = 0; i < payload_length; i++){
+    if (payload_arr[i] == '1'){
+      pay_arr[i] = 1;
+    }else{
+      pay_arr[i] = 0;
+    }
+  }
+
+  crc.add((uint8_t *)pre_arr, 24);
+  crc.add((uint8_t *)len_arr, 16);
+  crc.add((uint8_t *)pay_arr, payload_length);
   // crc.add((uint8_t *) merged, 40+payload_length);
   uint16_t crcValue = crc.calc();
 
@@ -195,8 +220,14 @@ void loop() {
 String stringToBinary(String input) {
   String binaryString = "";
   for (char c : input) {
-    binaryString += "0";
-    binaryString += String(c, BIN);
+    if (c == ' '){
+      binaryString += "00";
+      binaryString += String(c, BIN);
+    }else{
+      binaryString += "0";
+      binaryString += String(c, BIN);
+    }
+    
   }
   return binaryString;
 }
