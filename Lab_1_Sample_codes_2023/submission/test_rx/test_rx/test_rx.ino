@@ -140,8 +140,8 @@ void loop() {
         delay(5000);
       }
 
-
-      int* payload_decoded = manchester_decode(payloadBuffer);                         //Manchester decoding
+      char* payload_decoded = new char[sizePayload / 2];
+      payload_decoded = manchester_decode(payloadBuffer);                         //Manchester decoding
       String binaryString = intArrayToBinaryString(payload_decoded, sizePayload / 2);  //convert the array to string
       String information = binaryStringToString(binaryString);
       Serial.println("The information in this frame is: " + information);
@@ -282,10 +282,10 @@ int binToInt(uint8_t array[], uint8_t len) {
 //   return originalString;
 // }
 
-String intArrayToBinaryString(int* intArray, int length) {
+String intArrayToBinaryString(char* intArray, int length) {
   String binaryString = "";
   for (int i = 0; i < length; i++) {
-    binaryString += String(intArray[i]);
+    binaryString += intArray[i];
   }
   return binaryString;
 }
@@ -293,24 +293,28 @@ String intArrayToBinaryString(int* intArray, int length) {
 String binaryStringToString(String binaryString) {
   String originalString = "";
   for (int i = 0; i < binaryString.length(); i += 8) {
+     // declaring character array (+1 for null terminator)
+    char* char_array = new char[8 + 1];
     String byteString = binaryString.substring(i, i + 8);
-    char charValue = char(strtol(byteString.c_str(), NULL, 2));
+    strcpy(char_array, byteString.c_str());
+    char charValue = strtol(byteString.c_str(), 0, 2);
     originalString += charValue;
+    delete char_array;
   }
   return originalString;
 }
 
 //Calculate the decoded binary sequence
-int* manchester_decode(uint8_t payload[]) {
+char* manchester_decode(uint8_t payload[]) {
   int len = sizeof(payload) / sizeof(payload[0]);
-  int* payload_decoded = new int[len / 2];
+  char* payload_decoded = new char[len / 2];
   int i = 0, j = 0;
   while (i < len - 1) {
     if (payload[i] == 0b0 && payload[i + 1] == 0b1) {
-      payload_decoded[j] = 1;
+      payload_decoded[j] = '1';
     }
     if (payload[i] == 0b1 && payload[i + 1] == 0b0) {
-      payload_decoded[j] = 0;
+      payload_decoded[j] = '0';
     }
     i += 2;
     j++;
