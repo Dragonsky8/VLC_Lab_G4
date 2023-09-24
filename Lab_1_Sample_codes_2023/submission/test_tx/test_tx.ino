@@ -209,7 +209,7 @@ void loop() {
     end = micros();
     uint32_t elapsedTime = end - start;  // 计算经过的时间
       // 在串口监视器中打印经过的时间
-    uint32_t remainder = (100000) - elapsedTime;
+    uint32_t remainder = (50000) - elapsedTime;
     // Serial.println(remainder);
 
     delayMicroseconds(remainder);

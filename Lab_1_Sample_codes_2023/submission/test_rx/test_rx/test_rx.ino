@@ -13,9 +13,9 @@
  * Pin 1 of the OPT101 is connected to 5V of the Arduino Due
  * Pin 8 of the OPT101 is connected to GND of the Arduino Due
  */
-#define PD A1           // PD: Photodiode NOTE(broken wire )
-#define loopDelay 100000  // In mircroSeconds
-#define threshold 800   // Define by light intensity
+#define PD A1            // PD: Photodiode NOTE(broken wire )
+#define loopDelay 50000  // In mircroSeconds
+#define threshold 800    // Define by light intensity
 // Buffer used to check when the Preemple part of the frame is received
 RingBuf<uint8_t, 24> preembleBuffer;
 RingBuf<uint8_t, 24> preembleMessage;
@@ -140,14 +140,37 @@ void loop() {
         delay(5000);
       }
 
-      char* payload_decoded = new char[sizePayload / 2];
-      payload_decoded = manchester_decode(payloadBuffer);                         //Manchester decoding
-      String binaryString = intArrayToBinaryString(payload_decoded, sizePayload / 2);  //convert the array to string
-      Serial.println("The decoded binary string is: " + binaryString);
-      String information = binaryStringToString(binaryString);
-      Serial.println("The information in this frame is: " + information);
-      Serial.println("Done with payload");
-      delete[] payload_decoded;
+      // Decode part
+      int decodeLen = sizePayload / 2;
+      Serial.println("Len decode: ");
+      Serial.println(decodeLen);
+
+      char manDecoded[decodeLen];
+      for (int i = 0; i < decodeLen; i++) {
+        manDecoded[i] = manchesterDecode(payloadBuffer[(2 * i)], payloadBuffer[(2 * i) + 1]);
+        Serial.print(manDecoded[i]);
+      }
+      // Print out the ascii char
+      for (int i = 0; i < decodeLen; i + 8) {
+        String binaryString = "";
+        char letter[8];
+        for (int j = 0; j < (decodeLen / 2); j++) {
+          Serial.print(manDecoded[(i * j)]);
+          binaryString += manDecoded[(i * j)];
+        }
+        binaryString.toCharArray(letter, 8);
+        char c = strtol(letter, 0, 2);
+        Serial.print(c);
+      }
+      // char* payload_decoded = new char[sizePayload / 2];
+
+      // payload_decoded = manchester_decode(payloadBuffer);                                                         //Manchester decoding
+      // String binaryString = intArrayToBinaryString(payload_decoded, sizePayload / 2);  //convert the array to string
+      // Serial.println("The decoded binary string is: " + binaryString);
+      // String information = binaryStringToString(binaryString);
+      // Serial.println("The information in this frame is: " + information);
+      // Serial.println("Done with payload");
+      // delete[] payload_decoded;
       preembleBuffer.clear();
       crc.reset();
     } else {
@@ -183,7 +206,7 @@ bool hexToBinary(int hexValue) {
   return true;
 }
 
-int manchesterDecode(int A, int B) {
+char manchesterDecode(uint8_t A, uint8_t B) {
   if (A == 1 && B == 0) {
     return 0;
   } else if (A == 0 && B == 1) {
@@ -194,14 +217,14 @@ int manchesterDecode(int A, int B) {
 
 bool compareRingBuf(RingBuf<uint8_t, 24> A, RingBuf<uint8_t, 24> B) {
   // Printing the Ringbuf Comparison
-  // for (int i = (A.size() - 1); i >= 0; i--) {
-  //   Serial.print((A[i]));
-  // }
-  // Serial.print(" VS ");
-  // for (int i = (B.size() - 1); i >= 0; i--) {
-  //   Serial.print((B[i]));
-  // }
-  // Serial.println("");
+  for (int i = (A.size() - 1); i >= 0; i--) {
+    Serial.print((A[i]));
+  }
+  Serial.print(" VS ");
+  for (int i = (B.size() - 1); i >= 0; i--) {
+    Serial.print((B[i]));
+  }
+  Serial.println("");
 
   if (A.size() != B.size()) {
     return false;
@@ -299,7 +322,8 @@ String binaryStringToString(String binaryString) {
     char* char_array = new char[8 + 1];
     // string to char array
     strcpy(char_array, byteString.c_str());
-    char charValue = strtol(char_array, 0, 2);;
+    char charValue = strtol(char_array, 0, 2);
+    ;
     originalString += charValue;
     delete[] char_array;
   }
