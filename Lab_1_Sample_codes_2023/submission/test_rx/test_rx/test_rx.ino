@@ -140,11 +140,11 @@ void loop() {
         delay(5000);
       }
 
-      char* payload_decoded = new char[sizePayload / 2];
-      payload_decoded = manchester_decode(payloadBuffer);                         //Manchester decoding
-      String binaryString = intArrayToBinaryString(payload_decoded, sizePayload / 2);  //convert the array to string
-      Serial.println("The decoded binary string is: " + binaryString);
-      String information = binaryStringToString(binaryString);
+      char payload_decoded[sizePayload / 2];
+      manchester_decode(payloadBuffer, payload_decoded);                         //Manchester decoding
+      // String binaryString = intArrayToBinaryString(payload_decoded, sizePayload / 2);  //convert the array to string
+      // Serial.println("The decoded binary string is: " + binaryString);
+      String information = binaryStringToString(payload_decoded, sizePayload / 2);
       Serial.println("The information in this frame is: " + information);
       Serial.println("Done with payload");
       delete[] payload_decoded;
@@ -291,25 +291,29 @@ String intArrayToBinaryString(char* intArray, int length) {
   return binaryString;
 }
 
-String binaryStringToString(String binaryString) {
+String binaryStringToString(char intArray[], int length) {
   String originalString = "";
-  for (int i = 0; i < binaryString.length(); i += 8) {
-    String byteString = binaryString.substring(i, i + 8);
-    // declaring character array (+1 for null terminator)
-    char* char_array = new char[8 + 1];
-    // string to char array
-    strcpy(char_array, byteString.c_str());
-    char charValue = strtol(char_array, 0, 2);;
+  char temp[8];
+  for (int i = 0; i < length;) {
+    // String byteString = binaryString.substring(i, i + 8);
+    // // declaring character array (+1 for null terminator)
+    // char* char_array = new char[8 + 1];
+    // // string to char array
+    // strcpy(char_array, byteString.c_str());
+    for (int j = 0; j < 8; j++){
+      temp[j] = intArray[i];
+      i++;
+    }
+    char charValue = strtol(temp, 0, 2);;
     originalString += charValue;
-    delete[] char_array;
+    
   }
   return originalString;
 }
 
 //Calculate the decoded binary sequence
-char* manchester_decode(uint8_t payload[]) {
+void manchester_decode(uint8_t payload[], char payload_decoded[]) {
   int len = sizeof(payload) / sizeof(payload[0]);
-  char payload_decoded[len / 2];
   int i = 0, j = 0;
   while (i < len - 1) {
     if (payload[i] == 0b0 && payload[i + 1] == 0b1) {
@@ -321,5 +325,5 @@ char* manchester_decode(uint8_t payload[]) {
     i += 2;
     j++;
   }
-  return payload_decoded;
+  
 }
