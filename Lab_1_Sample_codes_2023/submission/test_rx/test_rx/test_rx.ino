@@ -113,12 +113,13 @@ void loop() {
         delay(5000);
       }
 
-      // int payload_decoded[sizePayload/2];
-      // int* payload_decoded = manchester_decode(payloadBuffer);                //Manchester decoding
-      // String information = binaryToString(payload_decoded, sizePayload / 2);  //convert the array to string
-      // Serial.println("The information in this frame is: " + information);
-      // Serial.println("Done with payload");
-      // delete payload_decoded;
+   
+      int* payload_decoded = manchester_decode(payloadBuffer);                //Manchester decoding
+      String binaryString = intArrayToBinaryString(payload_decoded, sizePayload / 2);  //convert the array to string
+      String information = binaryStringToString(binaryString);
+      Serial.println("The information in this frame is: " + information);
+      Serial.println("Done with payload");
+      delete payload_decoded;
       crc.reset();
     } else {
       stop = micros();
@@ -224,15 +225,33 @@ int binToInt(uint8_t array[], uint8_t len) {
 }
 
 //convert the binary sequence to words
-String binaryToString(int* binaryData, int length) {
+// String binaryToString(int* binaryData, int length) {
 
+//   String originalString = "";
+//   for (int i = 0; i < length; i += 8) {
+//     int byteValue = 0;
+//     for (int j = 0; j < 8; j++) {
+//       byteValue |= (binaryData[i + j] << (7 - j));
+//     }
+//     originalString += char(byteValue);
+//   }
+//   return originalString;
+// }
+
+String intArrayToBinaryString(int* intArray, int length) {
+  String binaryString = "";
+  for (int i = 0; i < length; i++) {
+    binaryString += String(intArray[i]);
+  }
+  return binaryString;
+}
+
+String binaryStringToString(String binaryString) {
   String originalString = "";
-  for (int i = 0; i < length; i += 8) {
-    int byteValue = 0;
-    for (int j = 0; j < 8; j++) {
-      byteValue |= (binaryData[i + j] << (7 - j));
-    }
-    originalString += char(byteValue);
+  for (int i = 0; i < binaryString.length(); i += 8) {
+    String byteString = binaryString.substring(i, i + 8);
+    char charValue = char(strtol(byteString.c_str(), NULL, 2));
+    originalString += charValue;
   }
   return originalString;
 }

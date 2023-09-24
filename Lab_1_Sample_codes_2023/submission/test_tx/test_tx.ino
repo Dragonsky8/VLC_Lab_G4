@@ -195,6 +195,7 @@ void loop() {
 String stringToBinary(String input) {
   String binaryString = "";
   for (char c : input) {
+    binaryString += "0";
     binaryString += String(c, BIN);
   }
   return binaryString;
