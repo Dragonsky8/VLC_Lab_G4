@@ -67,6 +67,7 @@ void loop() {
   // delay(500); // TX frequency:  1s/400ms = 2.5 Hz
 
 
+  // String dataToEncode = "Hello VLC&S 2023-2024";
   String dataToEncode = "Hello";
 
   char preamble_arr[24];
@@ -209,7 +210,7 @@ void loop() {
     end = micros();
     uint32_t elapsedTime = end - start;  // 计算经过的时间
       // 在串口监视器中打印经过的时间
-    uint32_t remainder = (50000) - elapsedTime;
+    uint32_t remainder = (10000) - elapsedTime;
     // Serial.println(remainder);
 
     delayMicroseconds(remainder);
@@ -222,7 +223,7 @@ void loop() {
 String stringToBinary(String input) {
   String binaryString = "";
   for (char c : input) {
-    if (c == ' '){
+    if (c == ' ' || c == '&'){
       binaryString += "00";
       binaryString += String(c, BIN);
     }else{
