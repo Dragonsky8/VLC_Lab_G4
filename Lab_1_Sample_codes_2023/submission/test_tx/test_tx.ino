@@ -209,14 +209,14 @@ void loop() {
     end = micros();
     uint32_t elapsedTime = end - start;  // 计算经过的时间
       // 在串口监视器中打印经过的时间
-    uint32_t remainder = (100000) - elapsedTime;
+    uint32_t remainder = (200) - elapsedTime;
     // Serial.println(remainder);
 
     delayMicroseconds(remainder);
   }
   Serial.println("done with sending payload");
   // delay for a while
-  delay(1000);
+  delay(1);
 }
 
 String stringToBinary(String input) {

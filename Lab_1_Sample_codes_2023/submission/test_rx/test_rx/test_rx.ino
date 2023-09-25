@@ -14,8 +14,8 @@
  * Pin 8 of the OPT101 is connected to GND of the Arduino Due
  */
 #define PD A1           // PD: Photodiode NOTE(broken wire )
-#define loopDelay 100000  // In mircroSeconds
-#define threshold 800   // Define by light intensity
+#define loopDelay 200  // In mircroSeconds
+#define threshold 215   // Define by light intensity
 // Buffer used to check when the Preemple part of the frame is received
 RingBuf<uint8_t, 24> preembleBuffer;
 RingBuf<uint8_t, 24> preembleMessage;
