@@ -14,7 +14,7 @@
  * Pin 8 of the OPT101 is connected to GND of the Arduino Due
  */
 #define PD A1            // PD: Photodiode NOTE(broken wire )
-#define loopDelay 10000  // In mircroSeconds
+#define loopDelay 3000  // In mircroSeconds
 #define threshold 200    // Define by light intensity
 // Buffer used to check when the Preemple part of the frame is received
 RingBuf<uint8_t, 24> preembleBuffer;
@@ -98,6 +98,11 @@ void loop() {
         stop = micros();
         delayMicroseconds(loopDelay - (stop - start));
       }
+      Serial.println("");
+      Serial.println("The received CRC sequence:");
+        for (int i = 0; i < sizeof(crcArray) / sizeof(crcArray[0]); i++) {
+          Serial.print(crcArray[i]);
+        }
       int crcReceived = binToInt(crcArray, 16);
       // Add crc of the payload part
       // Add preemble to CRC object
@@ -119,7 +124,7 @@ void loop() {
       Serial.println("");
       uint16_t crcCalc = crc.calc();
 
-      Serial.println("CRC receiver calc:");
+      Serial.println("CRC calculated:");
       Serial.print((crcCalc));
 
       // Serial.println("Show frame: ");
@@ -137,43 +142,30 @@ void loop() {
         Serial.println(" Invalid CRC");
         Serial.println((crcReceived));
         Serial.println((crcCalc));
-        delay(5000);
+        preembleBuffer.clear();
+        crc.reset();
+        continue;
+      }else{
+         // Decode part
+        int decodeLen = sizePayload / 2;
+        Serial.println("Len decode: ");
+        Serial.println(decodeLen);
+
+        char manDecoded[decodeLen];
+    
+        for (int i = 0; i < decodeLen; i++) {
+          manDecoded[i] = manchesterDecode(payloadBuffer[(2 * i)], payloadBuffer[(2 * i) + 1]);
+          Serial.print(manDecoded[i]);
+        }
+        Serial.println("");
+
+        String str = intArrayToBinaryString(manDecoded, decodeLen);
+        String info = binaryStringToString(str);
+        Serial.println(info);
+
+        preembleBuffer.clear();
+        crc.reset();
       }
-
-      // Decode part
-      int decodeLen = sizePayload / 2;
-      Serial.println("Len decode: ");
-      Serial.println(decodeLen);
-
-      char manDecoded[decodeLen];
-      for (int i = 0; i < decodeLen; i++) {
-        manDecoded[i] = manchesterDecode(payloadBuffer[(2 * i)], payloadBuffer[(2 * i) + 1]);
-        Serial.print(manDecoded[i]);
-      }
-      Serial.println("");
-      // Print out the ascii char
-      // for (int i = 0; i < decodeLen; i + 8) {
-      //   char letter[9];
-      //   for (int j = 0; j < (decodeLen / 2); j++) {
-      //     letter[j] = manDecoded[(i * 8 + j)];
-      //   }
-      //   letter[8] = '\0';
-      //   sprintf("%s", letter);
-      // }
-      String str = intArrayToBinaryString(manDecoded, decodeLen);
-      String info = binaryStringToString(str);
-      Serial.println(info);
-      // char* payload_decoded = new char[sizePayload / 2];
-
-      // payload_decoded = manchester_decode(payloadBuffer);                                                         //Manchester decoding
-      // String binaryString = intArrayToBinaryString(payload_decoded, sizePayload / 2);  //convert the array to string
-      // Serial.println("The decoded binary string is: " + binaryString);
-      // String information = binaryStringToString(binaryString);
-      // Serial.println("The information in this frame is: " + information);
-      // Serial.println("Done with payload");
-      // delete[] payload_decoded;
-      preembleBuffer.clear();
-      crc.reset();
     } else {
       stop = micros();
       uint32_t looptime = stop - bigStart;

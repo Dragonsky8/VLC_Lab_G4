@@ -67,8 +67,8 @@ void loop() {
   // delay(500); // TX frequency:  1s/400ms = 2.5 Hz
 
 
-  // String dataToEncode = "Hello VLC&S 2023-2024";
-  String dataToEncode = "Hello";
+  String dataToEncode = "Hello VLC&S 2023-2024";
+  // String dataToEncode = "Hello";
 
   char preamble_arr[24];
   char length_arr[16];
@@ -193,9 +193,14 @@ void loop() {
     frame[i] = crc_arr[i - (40 + payload_length)];
   }
 
-  // for (int i = 0; i < sizeof(frame) / sizeof(frame[0]); i++) {
-  //   Serial.print(frame[i]);
-  // }
+  for (int i = 0; i < crc_str.length(); i++) {
+    char bit = crc_str.charAt(i);
+    crc_arr[i] = bit;
+  }
+
+  for (int i = 0; i < sizeof(crc_arr) / sizeof(crc_arr[0]); i++) {
+    Serial.print(crc_arr[i]);
+  }
 
   //send the frame based on red channel
   for (int i = 0; i < sizeof(frame) / sizeof(frame[0]); i++) {
@@ -208,9 +213,9 @@ void loop() {
       digitalWrite(ledR, 0);  // off-on
     }
     end = micros();
-    uint32_t elapsedTime = end - start;  // 计算经过的时间
-      // 在串口监视器中打印经过的时间
-    uint32_t remainder = (10000) - elapsedTime;
+    uint32_t elapsedTime = end - start;  
+
+    uint32_t remainder = (3000) - elapsedTime;
     // Serial.println(remainder);
 
     delayMicroseconds(remainder);
@@ -223,11 +228,11 @@ void loop() {
 String stringToBinary(String input) {
   String binaryString = "";
   for (char c : input) {
-    if (c == ' ' || c == '&'){
-      binaryString += "00";
+    if ((c>='a'&&c<='z') || (c>='A'&&c<='Z')){
+      binaryString += "0";
       binaryString += String(c, BIN);
     }else{
-      binaryString += "0";
+      binaryString += "00";
       binaryString += String(c, BIN);
     }
     
