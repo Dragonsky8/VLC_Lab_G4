@@ -67,7 +67,7 @@ void loop() {
   // delay(500); // TX frequency:  1s/400ms = 2.5 Hz
 
 
-  String dataToEncode = "Hello VLC&S 2023-2024";
+  String dataToEncode = "Hello World";
   // String dataToEncode = "Hello";
 
   char preamble_arr[24];
@@ -222,7 +222,7 @@ void loop() {
   }
   Serial.println("done with sending payload");
   // delay for a while
-  delay(1000);
+  delay(10);
 }
 
 String stringToBinary(String input) {

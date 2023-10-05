@@ -13,14 +13,14 @@
  * Pin 1 of the OPT101 is connected to 5V of the Arduino Due
  * Pin 8 of the OPT101 is connected to GND of the Arduino Due
  */
-#define PD A1            // PD: Photodiode NOTE(broken wire )
+#define PD A1           // PD: Photodiode NOTE(broken wire )
 #define loopDelay 3000  // In mircroSeconds
-#define threshold 200    // Define by light intensity
+#define threshold 45   // Define by light intensity
 // Buffer used to check when the Preemple part of the frame is received
 RingBuf<uint8_t, 24> preembleBuffer;
 RingBuf<uint8_t, 24> preembleMessage;
 unsigned long start, stop, bigStart;
-
+uint8_t loopcount = 0;
 
 CRC16 crc;
 
@@ -100,9 +100,9 @@ void loop() {
       }
       Serial.println("");
       Serial.println("The received CRC sequence:");
-        for (int i = 0; i < sizeof(crcArray) / sizeof(crcArray[0]); i++) {
-          Serial.print(crcArray[i]);
-        }
+      for (int i = 0; i < sizeof(crcArray) / sizeof(crcArray[0]); i++) {
+        Serial.print(crcArray[i]);
+      }
       int crcReceived = binToInt(crcArray, 16);
       // Add crc of the payload part
       // Add preemble to CRC object
@@ -144,15 +144,14 @@ void loop() {
         Serial.println((crcCalc));
         preembleBuffer.clear();
         crc.reset();
-        continue;
-      }else{
-         // Decode part
+      } else {
+        // Decode part
         int decodeLen = sizePayload / 2;
         Serial.println("Len decode: ");
         Serial.println(decodeLen);
 
         char manDecoded[decodeLen];
-    
+
         for (int i = 0; i < decodeLen; i++) {
           manDecoded[i] = manchesterDecode(payloadBuffer[(2 * i)], payloadBuffer[(2 * i) + 1]);
           Serial.print(manDecoded[i]);
@@ -165,6 +164,7 @@ void loop() {
 
         preembleBuffer.clear();
         crc.reset();
+        delay(3000);
       }
     } else {
       stop = micros();
@@ -173,7 +173,10 @@ void loop() {
       if (remainder < 0) {
         remainder = loopDelay;
       }
+      if (loopcount == 100) {
       // Serial.println((remainder));
+
+      }
       delayMicroseconds((remainder));  // two times per second
     }
   }
@@ -210,14 +213,20 @@ char manchesterDecode(uint8_t A, uint8_t B) {
 
 bool compareRingBuf(RingBuf<uint8_t, 24> A, RingBuf<uint8_t, 24> B) {
   // Printing the Ringbuf Comparison
-  // for (int i = (A.size() - 1); i >= 0; i--) {
-  //   Serial.print((A[i]));
-  // }
-  // Serial.print(" VS ");
-  // for (int i = (B.size() - 1); i >= 0; i--) {
-  //   Serial.print((B[i]));
-  // }
-  // Serial.println("");
+  if (loopcount == 100) {
+    // for (int i = (A.size() - 1); i >= 0; i--) {
+    //   Serial.print((A[i]));
+    // }
+    // Serial.print(" VS ");
+    // for (int i = (B.size() - 1); i >= 0; i--) {
+    //   Serial.print((B[i]));
+    // }
+    // Serial.println("");
+    loopcount = 0;
+  } else {
+    loopcount++;
+  }
+
 
   if (A.size() != B.size()) {
     return false;
@@ -316,7 +325,7 @@ String binaryStringToString(String binaryString) {
     // string to char array
     strcpy(char_array, byteString.c_str());
     char charValue = strtol(char_array, 0, 2);
-    
+
     originalString += charValue;
     delete[] char_array;
   }
