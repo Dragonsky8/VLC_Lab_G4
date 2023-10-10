@@ -67,7 +67,7 @@ void loop() {
   // delay(500); // TX frequency:  1s/400ms = 2.5 Hz
 
 
-  String dataToEncode = "Hello VLC&S 2023-2024";
+  String dataToEncode = "Hello World";
   // String dataToEncode = "Hello";
 
   char preamble_arr[24];
@@ -215,7 +215,7 @@ void loop() {
     end = micros();
     uint32_t elapsedTime = end - start;  
 
-    uint32_t remainder = (3000) - elapsedTime;
+    uint32_t remainder = (100000) - elapsedTime; //10Hz for now, since the capture rate of camera is 30fps, 1/3 of camera
     // Serial.println(remainder);
 
     delayMicroseconds(remainder);
