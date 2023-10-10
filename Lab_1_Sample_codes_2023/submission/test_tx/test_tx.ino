@@ -197,10 +197,12 @@ void loop() {
     char bit = crc_str.charAt(i);
     crc_arr[i] = bit;
   }
-
-  for (int i = 0; i < sizeof(crc_arr) / sizeof(crc_arr[0]); i++) {
-    Serial.print(crc_arr[i]);
+  Serial.println("payload: ");
+  for (int i = 0; i < sizeof(frame) / sizeof(frame[0]); i++) {
+    Serial.print(frame[i]);
   }
+  Serial.println("");
+
 
   //send the frame based on red channel
   for (int i = 0; i < sizeof(frame) / sizeof(frame[0]); i++) {
@@ -215,7 +217,7 @@ void loop() {
     end = micros();
     uint32_t elapsedTime = end - start;  
 
-    uint32_t remainder = (100000) - elapsedTime; //10Hz for now, since the capture rate of camera is 30fps, 1/3 of camera
+    uint32_t remainder = (16667) - elapsedTime; //10Hz for now, since the capture rate of camera is 30fps, 1/3 of camera
     // Serial.println(remainder);
 
     delayMicroseconds(remainder);
