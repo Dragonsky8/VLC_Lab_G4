@@ -73,17 +73,17 @@ void loop() {
     }else if (elapsedTime >= 1000000 && elapsedTime < 2000000){
       /*
       * Pattern 2, different flickering
-      */
+      */  
       if (counter % 2 == 1 && britnessR == 0){
         britnessR = 0;
         counter++;
-      }else if (counter % 2 == 1 && britnessR == 1){
-        britnessR = 1;
+      }else if (counter % 2 == 1 && britnessR == 255){
+        britnessR = 255;
         counter++;
       }else if (counter % 2 == 0 && britnessR == 0){
-        britnessR = 1;
+        britnessR = 255;
         counter = 1;
-      }else if (counter % 2 == 0 && britnessR == 1){
+      }else if (counter % 2 == 0 && britnessR == 255){
         britnessR = 0;
         counter = 1;
       }
