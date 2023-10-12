@@ -69,7 +69,7 @@ void loop() {
       analogWrite(ledR, britnessR);
       britnessR = (britnessR == 0 ? 255 : 0);
     
-      delayMicroseconds(100000); // TX frequency:  1s/100ms = 10 Hz
+      delayMicroseconds(1000); // TX frequency:  1s/100ms = 10 Hz
     }else if (elapsedTime >= 1000000 && elapsedTime < 2000000){
       /*
       * Pattern 2, different flickering
@@ -90,7 +90,7 @@ void loop() {
       }
    
       
-      delayMicroseconds(1000000); // TX frequency:  1s/100ms = 10 Hz
+      delayMicroseconds(1000); // TX frequency:  1s/100ms = 10 Hz
 
     }else if (elapsedTime >= 2000000 && elapsedTime < 3000000){
       /*
@@ -99,7 +99,7 @@ void loop() {
       analogWrite(ledR, britnessR);
       britnessR = (britnessR == 0 ? 255 : 0);
     
-      delayMicroseconds(33333); // TX frequency:  1s/33ms = 30 Hz
+      delayMicroseconds(333); // TX frequency:  1s/33ms = 30 Hz
     }
   
 }
