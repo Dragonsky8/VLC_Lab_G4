@@ -74,6 +74,7 @@ void loop() {
       /*
       * Pattern 2, different flickering
       */  
+      analogWrite(ledR, britnessR);
       if (counter % 2 == 1 && britnessR == 0){
         britnessR = 0;
         counter++;
@@ -88,10 +89,9 @@ void loop() {
         counter = 1;
       }
    
-      analogWrite(ledR, britnessR);
-
-    
+      
       delayMicroseconds(1000000); // TX frequency:  1s/100ms = 10 Hz
+
     }else if (elapsedTime >= 2000000 && elapsedTime < 3000000){
       /*
       * Pattern 3, diifferent frequency
