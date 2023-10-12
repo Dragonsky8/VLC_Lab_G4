@@ -217,7 +217,7 @@ void loop() {
     end = micros();
     uint32_t elapsedTime = end - start;  
 
-    uint32_t remainder = (33333) - elapsedTime; //10Hz for now, since the capture rate of camera is 30fps, 1/3 of camera
+    uint32_t remainder = (35000) - elapsedTime; //10Hz for now, since the capture rate of camera is 30fps, 1/3 of camera
     // Serial.println(remainder);
 
     delayMicroseconds(remainder);
