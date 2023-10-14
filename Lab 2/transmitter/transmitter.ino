@@ -90,7 +90,7 @@ void loop() {
       }
    
       
-      delayMicroseconds(1000); // TX frequency:  1s/100ms = 10 Hz
+      delayMicroseconds(1000); // TX frequency:  1s/1ms = 1kHz
 
     }else if (elapsedTime >= 2000000 && elapsedTime < 3000000){
       /*
@@ -99,7 +99,24 @@ void loop() {
       analogWrite(ledR, britnessR);
       britnessR = (britnessR == 0 ? 255 : 0);
     
-      delayMicroseconds(333); // TX frequency:  1s/33ms = 30 Hz
+      delayMicroseconds(333); // TX frequency:  1s/0.33ms = 3kHz
+    }else if (elapsedTime >= 3000000 && elapsedTime < 4000000){
+      /*
+      * Pattern 4, diifferent frequency
+      */
+      analogWrite(ledR, britnessR);
+      britnessR = (britnessR == 0 ? 255 : 0);
+    
+      delayMicroseconds(167); // TX frequency:  1s/0.16ms = 6kHz
+
+    }else if (elapsedTime >= 4000000 && elapsedTime < 5000000){
+      /*
+      * Pattern 5, diifferent frequency
+      */
+      analogWrite(ledR, britnessR);
+      britnessR = (britnessR == 0 ? 255 : 0);
+    
+      delayMicroseconds(80); // TX frequency:  1s/0.16ms = 12kHz
+
     }
-  
 }
