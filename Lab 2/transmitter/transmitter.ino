@@ -116,7 +116,8 @@ void loop() {
       analogWrite(ledR, britnessR);
       britnessR = (britnessR == 0 ? 255 : 0);
     
-      delayMicroseconds(80); // TX frequency:  1s/0.16ms = 12kHz
+      // delayMicroseconds(80); // TX frequency:  1s/0.08ms = 12kHz
+      delayMicroseconds(40); // TX frequency:  1s/0.04ms = 12kHz
 
     }
 }
