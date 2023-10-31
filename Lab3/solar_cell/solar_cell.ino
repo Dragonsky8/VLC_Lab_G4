@@ -30,5 +30,5 @@ void loop() {
   //   Serial.println(cell_1[i]);
   //   delay(100);
   // }
-  delay(100); //frequency 10Hz
+  delay(2); //frequency 500Hz
 }
